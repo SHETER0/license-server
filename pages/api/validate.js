@@ -59,6 +59,7 @@ export default async function handler(req, res) {
         licenseType: license.licenseType, 
         test: "success",
         expiry: license.expiryDate,
+        email: license.email,
         daysRemaining: Math.ceil((license.expiryDate - now) / (1000 * 60 * 60 * 24))
         });
 
