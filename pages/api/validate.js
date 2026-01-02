@@ -55,10 +55,13 @@ export default async function handler(req, res) {
 
     // 6. Return Success
     return res.status(200).json({
-      valid: true,
-      expiry: license.expiryDate,
-      daysRemaining: Math.ceil((license.expiryDate - now) / (1000 * 60 * 60 * 24))
-    });
+        valid: true,
+        // ADD THIS LINE:
+        licenseType: license.licenseType, 
+        // ----------------
+        expiry: license.expiryDate,
+        daysRemaining: Math.ceil((license.expiryDate - now) / (1000 * 60 * 60 * 24))
+        });
 
   } catch (error) {
     console.error(error);
