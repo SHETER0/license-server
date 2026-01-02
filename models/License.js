@@ -17,6 +17,15 @@ const LicenseSchema = new mongoose.Schema({
     enum: ['active', 'banned', 'expired'],
     default: 'active',
   },
+    licenseType: {
+    type: String,
+    enum: ['trial', 'standard', 'premium'],
+    default: 'trial'
+  },
+  email: {
+    type: String,
+    default: null
+  },
   expiryDate: {
     type: Date,
     required: true,

@@ -56,9 +56,8 @@ export default async function handler(req, res) {
     // Return Success
     return res.status(200).json({
         valid: true,
-
         licenseType: license.licenseType, 
-        // ----------------
+        test: "success",
         expiry: license.expiryDate,
         daysRemaining: Math.ceil((license.expiryDate - now) / (1000 * 60 * 60 * 24))
         });
