@@ -17,25 +17,25 @@ export default async function handler(req, res) {
   try {
     await dbConnect();
 
-    // 1. Find the license
+    // Find the license
     const license = await License.findOne({ key: key });
 
     if (!license) {
       return res.status(404).json({ valid: false, error: 'License key not found' });
     }
 
-    // 2. Check Status
+    // Check Status
     if (license.status !== 'active') {
       return res.status(403).json({ valid: false, error: 'License is ' + license.status });
     }
 
-    // 3. Check Expiry (Server Time vs Expiry Date)
+    // Check Expiry (Server Time vs Expiry Date)
     const now = new Date();
     if (now > license.expiryDate) {
       return res.status(403).json({ valid: false, error: 'License expired' });
     }
 
-    // 4. Hardware Lock Logic
+    // Hardware Lock Logic
     // If hardwareId is null (never used), lock it to this machine
     if (!license.hardwareId) {
       license.hardwareId = hardwareId;
@@ -49,14 +49,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // 5. Update last check-in time (Success)
+    //  last check-in time (Success)
     license.lastCheckIn = now;
     await license.save();
 
-    // 6. Return Success
+    // Return Success
     return res.status(200).json({
         valid: true,
-        // ADD THIS LINE:
+
         licenseType: license.licenseType, 
         // ----------------
         expiry: license.expiryDate,
