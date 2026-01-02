@@ -5,11 +5,12 @@ export default function Admin() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [licenses, setLicenses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [copyFeedback, setCopyFeedback] = useState(null); // ID of copied key
+  const [copyFeedback, setCopyFeedback] = useState(null);
   
   // Form State
   const [type, setType] = useState('premium');
   const [days, setDays] = useState(365);
+  const [email, setEmail] = useState('');
 
   // Fetch licenses
   const fetchLicenses = async () => {
@@ -35,20 +36,21 @@ export default function Admin() {
   // Create license
   const createLicense = async (e) => {
     e.preventDefault();
-    if (!confirm(`Generate 1 ${type.toUpperCase()} key?`)) return;
+    if (!confirm(`Generate 1 ${type.toUpperCase()} key for ${email || 'Anonymous'}?`)) return;
 
     setLoading(true);
     await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-      body: JSON.stringify({ type, days })
+      body: JSON.stringify({ type, days, email })
     });
+    setEmail(''); 
     await fetchLicenses();
   };
 
   // Delete license
   const deleteLicense = async (id) => {
-    if (!confirm("Permanently delete this key? Users will lose access immediately.")) return;
+    if (!confirm("Permanently delete this key?")) return;
     setLoading(true);
     await fetch('/api/admin?id=' + id, {
       method: 'DELETE',
@@ -57,7 +59,6 @@ export default function Admin() {
     await fetchLicenses();
   };
 
-  // Copy to clipboard helper
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
     setCopyFeedback(id);
@@ -67,209 +68,283 @@ export default function Admin() {
   // --- 1. LOGIN SCREEN ---
   if (!isLoggedIn) {
     return (
-      <div style={styles.loginContainer}>
-        <div style={styles.loginCard}>
-          <h2 style={styles.loginTitle}>Admin Access</h2>
-          <p style={styles.loginSubtitle}>Enter your master password to manage licenses.</p>
-          <form onSubmit={(e) => { e.preventDefault(); fetchLicenses(); }} style={styles.loginForm}>
+      <div className="login-container">
+        <div className="login-card">
+          <h2>Admin Access</h2>
+          <p>Enter your master password.</p>
+          <form onSubmit={(e) => { e.preventDefault(); fetchLicenses(); }} className="login-form">
             <input 
               type="password" 
               placeholder="Master Password" 
               value={password}
               onChange={e => setPassword(e.target.value)}
-              style={styles.input}
               autoFocus
             />
-            <button type="submit" style={styles.primaryBtn} disabled={loading}>
-              {loading ? 'Verifying...' : 'Login Dashboard'}
+            <button type="submit" disabled={loading}>
+              {loading ? 'Verifying...' : 'Enter Dashboard'}
             </button>
           </form>
         </div>
+        <StyleSheet />
       </div>
     );
   }
 
   // --- 2. MAIN DASHBOARD ---
   return (
-    <div style={styles.dashboard}>
-      {/* Navbar */}
-      <nav style={styles.nav}>
-        <div style={styles.logo}>🛡️ License Manager</div>
-        <button onClick={() => setIsLoggedIn(false)} style={styles.secondaryBtn}>Sign Out</button>
+    <div className="dashboard">
+      <nav className="nav">
+        <div className="logo">🛡️ License Manager</div>
+        <button onClick={() => setIsLoggedIn(false)} className="secondary-btn">Sign Out</button>
       </nav>
 
-      <main style={styles.main}>
+      <main className="main">
         {/* Generator Section */}
-        <section style={styles.card}>
-          <div style={styles.cardHeader}>
+        <section className="card">
+          <div className="card-header">
             <h3>Generate License</h3>
-            <span style={styles.badge}>New Sale</span>
+            <span className="badge">New Sale</span>
           </div>
-          <form onSubmit={createLicense} style={styles.generatorForm}>
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>License Tier</label>
-              <select value={type} onChange={e => setType(e.target.value)} style={styles.select}>
-                <option value="premium">Premium (All Features)</option>
-                <option value="standard">Standard (Basic)</option>
-                <option value="trial">Trial (Limited)</option>
+          <form onSubmit={createLicense} className="generator-form">
+            <div className="input-group">
+              <label>Customer Email</label>
+              <input 
+                type="email" 
+                placeholder="customer@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            <div className="input-group">
+              <label>License Tier</label>
+              <select value={type} onChange={e => setType(e.target.value)} className="select-field">
+                <option value="premium">Premium</option>
+                <option value="standard">Standard</option>
+                <option value="trial">Trial</option>
               </select>
             </div>
             
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Duration</label>
-              <select value={days} onChange={e => setDays(e.target.value)} style={styles.select}>
-                <option value="365">1 Year (365 Days)</option>
-                <option value="30">1 Month (30 Days)</option>
-                <option value="36500">Lifetime (Unlimited)</option>
+            <div className="input-group">
+              <label>Duration</label>
+              <select value={days} onChange={e => setDays(e.target.value)} className="select-field">
+                <option value="365">1 Year</option>
+                <option value="30">1 Month</option>
+                <option value="36500">Lifetime</option>
               </select>
             </div>
 
-            <div style={styles.actionGroup}>
-              <label style={styles.label}>Action</label>
-              <button type="submit" style={styles.createBtn} disabled={loading}>
-                {loading ? 'Generating...' : '✨ Generate Key'}
+            <div className="action-group">
+              <label>&nbsp;</label>
+              <button type="submit" className="create-btn" disabled={loading}>
+                {loading ? '...' : '✨ Generate Key'}
               </button>
             </div>
           </form>
         </section>
 
         {/* List Section */}
-        <section style={styles.card}>
-          <div style={styles.cardHeader}>
+        <section className="card">
+          <div className="card-header">
             <h3>Active Keys ({licenses.length})</h3>
-            <button onClick={fetchLicenses} style={styles.iconBtn}>🔄 Refresh</button>
+            <button onClick={fetchLicenses} className="refresh-btn">🔄 Refresh</button>
           </div>
           
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div className="table-wrapper">
+            <table className="table">
               <thead>
                 <tr>
-                  <th style={styles.th}>License Key</th>
-                  <th style={styles.th}>Type</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Expiry</th>
-                  <th style={styles.th}>Hardware Lock</th>
-                  <th style={styles.thRight}>Actions</th>
+                  <th>License Key</th>
+                  <th>Customer Email</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Hardware</th>
+                  <th style={{textAlign: 'right'}}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {licenses.map(lic => (
-                  <tr key={lic._id} style={styles.tr}>
-                    <td style={styles.td}>
+                  <tr key={lic._id}>
+                    <td>
                       <div 
-                        style={styles.keyContainer} 
+                        className="key-container" 
                         onClick={() => copyToClipboard(lic.key, lic._id)}
-                        title="Click to Copy"
                       >
-                        <span style={styles.keyText}>{lic.key}</span>
-                        {copyFeedback === lic._id && <span style={styles.copiedBadge}>Copied!</span>}
+                        <span className="key-text">{lic.key}</span>
+                        {copyFeedback === lic._id && <span className="copied-badge">Copied!</span>}
                       </div>
                     </td>
-                    <td style={styles.td}>
-                      <span style={getBadgeStyle(lic.licenseType)}>{lic.licenseType.toUpperCase()}</span>
-                    </td>
-                    <td style={styles.td}>
-                       <span style={lic.status === 'active' ? styles.statusActive : styles.statusBanned}>
+                    <td className="email-cell">{lic.email || <span style={{opacity:0.3}}>Anonymous</span>}</td>
+                    <td><span className={`badge-${lic.licenseType}`}>{lic.licenseType.toUpperCase()}</span></td>
+                    <td>
+                       <span className={lic.status === 'active' ? 'status-active' : 'status-banned'}>
                          ● {lic.status}
                        </span>
                     </td>
-                    <td style={styles.td}>{new Date(lic.expiryDate).toLocaleDateString()}</td>
-                    <td style={styles.td}>
+                    <td>
                       {lic.hardwareId ? 
-                        <span style={styles.hwLocked} title={lic.hardwareId}>🔒 Locked</span> : 
-                        <span style={styles.hwOpen}>🔓 Open</span>
+                        <span className="hw-locked" title={lic.hardwareId}>🔒 Locked</span> : 
+                        <span className="hw-open">🔓 Open</span>
                       }
                     </td>
-                    <td style={styles.tdRight}>
-                      <button 
-                        onClick={() => deleteLicense(lic._id)}
-                        style={styles.deleteBtn}
-                        title="Revoke License"
-                      >
-                        Revoke
-                      </button>
+                    <td style={{textAlign: 'right'}}>
+                      <button onClick={() => deleteLicense(lic._id)} className="delete-btn">Revoke</button>
                     </td>
                   </tr>
                 ))}
-                {licenses.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={styles.emptyState}>No licenses found. Generate one above.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </section>
       </main>
+      <StyleSheet />
     </div>
   );
 }
 
-// --- STYLES ---
-const getBadgeStyle = (type) => {
-    switch(type) {
-        case 'premium': return styles.badgeGold;
-        case 'trial': return styles.badgeBlue;
-        default: return styles.badgeGray;
+// --- DARK MODE CSS ---
+const StyleSheet = () => (
+  <style jsx global>{`
+    /* Global Dark Theme Reset */
+    * { box-sizing: border-box; }
+    body { 
+      margin: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      background-color: #0b1120; /* Darkest Slate */
+      color: #e5e7eb; /* Light Gray Text */
     }
-};
+    
+    /* Layout */
+    .dashboard { min-height: 100vh; }
+    .nav { 
+      background: #111827; /* Dark Slate */
+      padding: 15px 5%; 
+      border-bottom: 1px solid #1f2937; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+    }
+    .logo { font-weight: 700; font-size: 1.2rem; color: #fff; }
+    .main { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 30px; }
 
-const styles = {
-  // Global Layout
-  dashboard: { minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', color: '#111827' },
-  nav: { backgroundColor: '#ffffff', padding: '15px 40px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' },
-  logo: { fontWeight: '700', fontSize: '18px', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' },
-  main: { maxWidth: '1000px', margin: '40px auto', padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '30px' },
+    /* Login */
+    .login-container { height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background-color: #0b1120; }
+    .login-card { 
+      width: 100%; max-width: 400px; padding: 40px; 
+      background: #1f2937; /* Gray 800 */
+      border-radius: 12px; 
+      border: 1px solid #374151;
+      text-align: center; 
+    }
+    .login-card h2 { color: #fff; margin-top: 0; }
+    .login-card p { color: #9ca3af; }
+    
+    .login-form input { 
+      width: 100%; padding: 12px; margin-bottom: 15px; 
+      background: #111827; border: 1px solid #374151; color: white;
+      border-radius: 6px; 
+    }
+    .login-form button { 
+      width: 100%; padding: 12px; 
+      background: #3b82f6; color: white; 
+      border: none; border-radius: 6px; cursor: pointer; font-weight: 600; 
+    }
 
-  // Login Screen
-  loginContainer: { height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', fontFamily: 'sans-serif' },
-  loginCard: { width: '100%', maxWidth: '400px', padding: '40px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', textAlign: 'center' },
-  loginTitle: { margin: '0 0 10px 0', fontSize: '24px', fontWeight: 'bold' },
-  loginSubtitle: { margin: '0 0 30px 0', color: '#6b7280', fontSize: '14px' },
-  loginForm: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    /* Cards */
+    .card { 
+      background: #1f2937; /* Gray 800 */
+      border-radius: 12px; 
+      border: 1px solid #374151; /* Gray 700 */
+      overflow: hidden; 
+    }
+    .card-header { 
+      padding: 20px 24px; 
+      border-bottom: 1px solid #374151; 
+      display: flex; justify-content: space-between; align-items: center; 
+    }
+    .card-header h3 { margin: 0; font-size: 1.1rem; color: #fff; }
 
-  // Components
-  card: { backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', overflow: 'hidden' },
-  cardHeader: { padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  
-  // Generator Form
-  generatorForm: { padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '20px', alignItems: 'end', backgroundColor: '#fafafa' },
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  actionGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  label: { fontSize: '13px', fontWeight: '600', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  select: { padding: '10px 12px', borderRadius: '6px', color: "#000", border: '1px solid #d1d5db', backgroundColor: '#ffffff', fontSize: '14px', height: '42px' },
-  input: { padding: '12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '16px', outline: 'none' },
+    /* Forms */
+    .generator-form { 
+      padding: 24px; 
+      display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 20px; align-items: end; 
+      background: #111827; /* Darker inset for form */
+    }
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; }
+    
+    .input-field, .select-field { 
+      padding: 10px 12px; border-radius: 6px; 
+      border: 1px solid #374151; 
+      background: #1f2937; 
+      color: #fff;
+      width: 100%; height: 42px; 
+    }
+    .input-field:focus, .select-field:focus { border-color: #3b82f6; outline: none; }
 
-  // Buttons
-  primaryBtn: { padding: '12px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', transition: 'background 0.2s' },
-  secondaryBtn: { padding: '8px 16px', backgroundColor: 'transparent', color: '#4b5563', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500' },
-  createBtn: { padding: '0 24px', height: '42px', backgroundColor: '#059669', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' },
-  deleteBtn: { padding: '6px 12px', backgroundColor: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '500' },
-  iconBtn: { background: 'none', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' },
+    /* Buttons */
+    .create-btn { height: 42px; padding: 0 24px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+    .create-btn:hover { background: #059669; }
+    
+    .secondary-btn { padding: 8px 16px; border: 1px solid #374151; color: #d1d5db; background: transparent; border-radius: 6px; cursor: pointer; }
+    .secondary-btn:hover { background: #374151; }
+    
+    .delete-btn { padding: 6px 12px; background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+    .delete-btn:hover { background: #991b1b; color: white; }
+    
+    .refresh-btn { background: none; border: none; color: #9ca3af; cursor: pointer; transition: color 0.2s; }
+    .refresh-btn:hover { color: #fff; }
 
-  // Table
-  tableWrapper: { overflowX: 'auto' },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: '14px' },
-  th: { padding: '12px 24px', textAlign: 'left', borderBottom: '1px solid #e5e7eb', color: '#6b7280', fontWeight: '600', fontSize: '12px', textTransform: 'uppercase' },
-  thRight: { padding: '12px 24px', textAlign: 'right', borderBottom: '1px solid #e5e7eb', color: '#6b7280', fontWeight: '600', fontSize: '12px', textTransform: 'uppercase' },
-  tr: { borderBottom: '1px solid #f3f4f6' },
-  td: { padding: '16px 24px', color: '#111827' },
-  tdRight: { padding: '16px 24px', textAlign: 'right' },
-  emptyState: { padding: '40px', textAlign: 'center', color: '#6b7280' },
+    /* Table */
+    .table-wrapper { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 600px; }
+    .table th { 
+      text-align: left; padding: 12px 24px; 
+      border-bottom: 1px solid #374151; 
+      color: #9ca3af; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; 
+    }
+    .table td { 
+      padding: 16px 24px; 
+      border-bottom: 1px solid #374151; 
+      color: #d1d5db; 
+    }
+    .table tr:last-child td { border-bottom: none; }
+    
+    /* Elements */
+    .key-container { 
+      font-family: monospace; 
+      background: #111827; 
+      border: 1px solid #374151;
+      padding: 6px 10px; border-radius: 4px; 
+      display: inline-block; cursor: pointer; position: relative; 
+      font-weight: 600; color: #60a5fa; 
+    }
+    .key-container:hover { border-color: #60a5fa; }
+    
+    .copied-badge { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; }
+    .email-cell { color: #9ca3af; font-style: italic; }
+    
+    /* Badges */
+    .badge-premium { background: #3b0764; color: #d8b4fe; border: 1px solid #6b21a8; padding: 2px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; }
+    .badge-standard { background: #111827; color: #d1d5db; border: 1px solid #374151; padding: 2px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; }
+    .badge-trial { background: #172554; color: #93c5fd; border: 1px solid #1e40af; padding: 2px 10px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; }
+    
+    .status-active { color: #34d399; font-weight: 500; }
+    .status-banned { color: #f87171; font-weight: 500; }
+    .hw-locked { color: #fbbf24; font-size: 0.75rem; }
+    .hw-open { color: #34d399; font-size: 0.75rem; }
+    
+    .badge { background: #064e3b; color: #34d399; font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; border: 1px solid #059669; }
 
-  // Badges & Status
-  keyContainer: { fontFamily: 'Monaco, Consolas, monospace', background: '#f3f4f6', padding: '6px 10px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer', position: 'relative' },
-  keyText: { fontWeight: '600', color: '#374151' },
-  copiedBadge: { position: 'absolute', top: '-25px', left: '50%', transform: 'translateX(-50%)', background: '#111827', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', pointerEvents: 'none' },
-  
-  badgeGold: { backgroundColor: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px' },
-  badgeBlue: { backgroundColor: '#dbeafe', color: '#1e40af', padding: '4px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px' },
-  badgeGray: { backgroundColor: '#f3f4f6', color: '#374151', padding: '4px 10px', borderRadius: '99px', fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px' },
-  badge: { backgroundColor: '#d1fae5', color: '#065f46', fontSize: '11px', padding: '2px 8px', borderRadius: '99px', fontWeight: '600' },
-
-  statusActive: { color: '#059669', fontWeight: '500', fontSize: '13px' },
-  statusBanned: { color: '#dc2626', fontWeight: '500', fontSize: '13px' },
-  
-  hwLocked: { color: '#d97706', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
-  hwOpen: { color: '#059669', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' },
-};
+    /* RESPONSIVE BREAKPOINTS */
+    @media (max-width: 768px) {
+      .generator-form { grid-template-columns: 1fr; gap: 15px; }
+      .action-group label { display: none; }
+      .create-btn { width: 100%; margin-top: 10px; }
+      .nav { padding: 15px; }
+      .main { padding: 0 10px; }
+      .table th:nth-child(2), .table td:nth-child(2) { display: none; } /* Hide email on small screens */
+    }
+  `}</style>
+);

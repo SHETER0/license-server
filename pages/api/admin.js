@@ -21,8 +21,7 @@ export default async function handler(req, res) {
 
     // POST: Generate a new License
     if (method === 'POST') {
-      const { type, days } = req.body; // e.g., 'premium', 365
-      
+     const { type, days, email } = req.body; //
       // Calculate Expiry
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + parseInt(days));
@@ -39,6 +38,7 @@ export default async function handler(req, res) {
         key,
         licenseType: type,
         expiryDate,
+        email: email || null,
         status: 'active'
       });
 
